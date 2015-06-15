@@ -1,0 +1,40 @@
+Online Data Collection
+	Notes:
+	Instruments: Cut "county" and reduce "grantee" to only those who are participating in online data collection. also cut down to top 5 programs for online data collection.
+		Is there enough there to properly parse out who's in what class (IP, date & time, program, grantee)?
+		Educator form: must have definition, remove extraneous information (as quick and easy as possible), do we need a measure of estimated racial breakdown???
+		Forms A, B, C: must match paper documents (i.e. cut definitions, race/ethnicity, add/change questions)
+		
+	Tasks: 
+		Update forms (A, B, C, Educator Form)
+		Create cleaning syntax document (procedures and example code)
+		Double check LH work
+		
+		
+Current Data Collection
+	Tasks:
+		Check all syntax documents for errors
+		Run syntax on test dataset
+		Create R graphs for everything needed (templates for bar, hist, etc. from KP).
+		Create graphs with DC on viz software
+		
+		Enter all data (RAs)
+		Verify all data (RAs)
+		
+		Fidelity Logs & Report (SF)
+		
+		Annual Report (DC)
+		
+		
+Longitudinal Data
+	Tasks:
+		Pre / Post clean & merge syntaxes
+			FY11 (SF)
+			FY12 - 14 (SF)
+			FY15 (SF)
+		6th / C clean & merge syntaxes
+			FY12 - 14 (SF)
+			FY15 (SF)
+		Merge datasets
+		
+		
