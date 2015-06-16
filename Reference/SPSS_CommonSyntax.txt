@@ -1,0 +1,911 @@
+Common SPSS Commands.
+Adapted from materials provided by KP.
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER A. DATA MANAGEMENT codes
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+A.1) 
+string gender (A6).
+execute.
+
+A.1.1) Create a case number
+compute Case_id=$casenum.
+
+
+A.1)
+temporary.
+select if (q14 LE 3 OR q14 EQ 6).
+CROSSTABS
+  /TABLES=chrchfrq  BY q11j q11k q11l q11m q11n q11o q11p q11q q11r
+  /FORMAT= AVALUE TABLES
+  /STATISTICS=CHISQ
+  /CELLS= COUNT ROW
+  /COUNT ROUND CELL .
+ 
+A.2)
+sort cases by q17.
+split file by q17.
+freq q9d q9j q9p q9v q9bb q9hh q9nn q9tt/statistics=mean.
+split file off.
+
+A.2.1)
+*This split allow to have separate outputs by city.
+sort cases by city.
+SPLIT FILE SEPARATE BY city .
+frequencies !city_var.
+SPLIT FILE OFF.
+
+ 
+A.3)
+if (q4 GE 18 and q4 LE 25) age=1.
+if q4=99 age=9.
+
+ 
+A.4)
+recode q15 (0=1)(1 thru 3=2)(4 thru 5=3) into chrchfrq.
+ 
+value labels chrchfrq 1'Never attend church' 2'Attend church 1-3 times per month' 3'Attend church 4 or more times per month'.
+ 
+A.4.1)
+recode q27_1 q27_7 q27_10 q27_15 q27_17 q27_22 (else=copy) into q27a_s q27g_s q27j_s q27o_s q27q_s q27v_s.
+ 
+A.4.2)
+RECODE
+HPLP_1 HPLP_2 HPLP_3
+ (1=1) (2=2) (3=3) (4=4) (Else=copy) INTO hpl_s1  hpl_s2 hpl_s3
+ 
+format hpl_s1 to hpl_s52 (F4.0).
+
+A.4.3) reverse code
+compute newVAR=(6-VAR).
+This is likert style 1 to 5 into 5 to 1.
+
+A.4.4) Autorecode for string into numeric.
+autorecode S_1 /into Sr_1.
+execute.
+
+A.5) appliyng VALUE LABELS into NEW
+Thanks Jon.  Here is an example from the Help file:
+
+APPLY DICTIONARY from *
+  /SOURCE VARIABLES = var1
+  /TARGET VARIABLES = var2 var3 var4
+  /NEWVARS.
+
+• Variable definition attributes for var1 in the active dataset are
+copied to var2, var3, and var4 in the same dataset if they have a
+matching type.
+• Any variables specified in the TARGET subcommand that do not already
+exist are created, using the variable definition attributes of the
+variable specified in the SOURCE subcommand.
+Am I correct in thinking that APPLY DICTIONARY did not always have
+this capability?  Presumably, Raynald would not have written his macro
+if he could have done this.
+ 
+
+A.6)
+Rename variables
+(q1=mq1) (q2=mq2) (q3=mq3) (q4=mq4) (q5=mq5) (q6=mq6) (q7=mq7) (q8_1=mq8_1).
+ 
+A.7) Counting for any
+*New variable - Any Language barrier.
+ 
+compute lbarrier=0.
+COUNT q43fix =qF5_b to QF5_p (1).
+if q43fix GE 1 lbarrier=1.
+ 
+Value Labels
+lbarrier 1 "Yes" 0 "No/Non-Reported"
+ 
+
+
+A.8) Multiple select if
+ 
+*Taught.
+temporary.
+select if any (T1tname,1,2,4,6,8) or any (t2tname,1,2,4,6,8).
+t-test   PAIRS = t1q23_sc  WITH t2q23_sc (PAIRED)
+  /CRITERIA = CI(.95)
+  /MISSING = ANALYSIS.
+
+
+
+A.9) BASIC Visualize the results.
+
+temporary.
+select if fid>0.
+list FQ1_Y FQ1_M  fdate FMOdate/CASES = FROM 1 to 2000 by 3.
+
+
+
+A.10) Copy value labels from existing ones
+The original APPLY DICTIONARY command was much more rigid, but it was
+reworked sometime around version 14.
+Note that the command allows you to just copy value labels by
+specifying /VARINFO VALLABELS=MERGE or REPLACE.
+-Jon
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER B. MODIFY MEASUREMENT & ALTER functions
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+B.1) Variable and measure type.
+ALTER TYPE
+alter type V1 (F8.2).
+
+alter type subj (F2)
+alter type subj (A8). 
+
+B.2) 
+*redefine  VARIABLE measurement level.
+VARIABLE LEVEL ID_GLMM ZIPcode agency_cat agency_cat2 (nominal).
+
+A.11.2) Trimming a string variable from ‘blank’ spaces at the end.
+APAR: PM86833
+
+You're running the MVA (Missing Values Analysis) procedure in
+SPSS Statistics. The analysis specified includes few enough
+variables that it seems very unlikely to require much memory,
+but the procedure nonetheless quickly issues a message declaring
+that there is insufficient memory for the analysis and stops.
+A defect report has been filed with SPSS Development and the
+problem will be addressed in a future release. For the time
+being, you can work around the issue either by removing string
+variables with very long widths or using ALTER TYPE to trim off
+trailing blanks. Open a syntax window and run the command:
+
+ALTER TYPE ALL (A=AMIN).
+
+This will reduce the width of each string variable to the
+minimum width required to accommodate the longest non-null
+string found in the data and if you have many string variables
+with very long defined widths, may dramatically reduced the size
+of your file.
+
+We apologize for any inconvenience resulting from this problem.
+This issue has been addressed in IBM SPSS Statistics 21 Fix Pack
+2
+It will be addressed with IBM SPSS Statistics 22 Fix Pack 1 as
+well
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER C. RESTRUCTURE OF DATA
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+C.1) Visibility of some of the variables.
+
+*Match files will allow to visualize the ordering in the key variables.
+MATCH FILES
+ file = */KEEP = agency clientn modate sort_n all.
+sort cases by agency clientn modate sort_n.
+
+
+C.2) AGGREGATE: Restructuring the data.
+
+Aggregate
+ /outfile "N:\Share\Ki\2011-IHHS\Analysis\Data\2011_IHHS_Home_Visiting3_map.sav"
+ /break = county
+ /numHV = nu (Hvisiting)
+ /UR4_2 = mean (UR4).
+
+
+C.3) FILTER. This is a temporary function, but it has to be turned off.
+USE ALL.
+COMPUTE filter_$=(sex = 2 and age ge 25 and age le 50).
+VARIABLE LABEL filter_$ 'sex = 2 and age ge 25 and age le 50 (FILTER)'.
+VALUE LABELS filter_$ 0 'Not Selected' 1 'Selected'.
+FORMAT filter_$ (f1.0).
+FILTER BY filter_$.
+EXECUTE .
+
+
+C.4) Cases to variables (ket variable = set) & Variable to cases
+
+CASESTOVARS
+  /ID=set
+  /GROUPBY=VARIABLE.
+
+NOTE: CASE TO VARIABLES COULD BE USED TO CALCULATING CUMULATIVE DATA 
+      See other uses of CASESTOVARS when matching databases or computing scores
+
+
+
+*This is to make and indexed data structure with ID. (Used after Cases to variable)
+*It could be also extracted from an earlier version of the service data.
+VARSTOCASES
+  /ID=id
+  /MAKE trans1 FROM S_2_lag_cum.1 to   S_2_lag_cum.259
+  /MAKE trans2 FROM Sr_3_cum.1    to   Sr_3_cum.259
+  /INDEX=Index1(259)
+  /KEEP=dr_status_2
+  /NULL=KEEP.
+
+*This rename will be necessary to identify the transformed variable
+RENAME VARIABLES (trans1=S_2_lag_cum)
+                 (trans2=Sr_3_cum).
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER D. IMPORT DATA
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+D.1) Excel into SPSS
+GET DATA
+   /TYPE=XLSX
+   /FILE= 'H:\ORIGIN\TELKEY_ZIP.xlsx'
+   /CELLRANGE=full
+   /READNAMES=on.
+
+
+save outfile = "H:\DESTINATION\Discloure_ID_key3.sav"/.
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER E. MERGING AND ADDING DATABASES
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+E.1) Match files
+*Create UNIQUE_id paired with ZIPcode.
+-NOTE: sort cases by the match variable.
+Sort cases by telkey
+MATCH FILES /FILE="H:\FIRST_FILE\Discloure_.sav"/       
+            /FILE="H:\SECOND_FILE\Discloure_4.sav"/
+            /BY telkey.
+EXECUTE.
+
+
+B.2) ADD/MERGE files.
+
+ADD FILES /FILE="H:\GROUPS\CSBR\GamblingOutcomesUNI\Year_7.sav"
+          /FILE="H:\GROUPS\CSBR\GamblingOutcomesUNI\Year_7_C.sav".
+EXECUTE.
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER F. DATES AND STRINGS
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+F.1)*date function.
+COMPUTE MOdate=DATE.MOYR(atmm, atyy).
+FORMATS MOdate(MOYR10).
+VARIABLE WIDTH MOdate (10).
+EXECUTE.
+
+    
+F.1.1) DATA LIST / name 1-4 (A) dd 5-6 mm 7-8 yy 9-12.
+BEGIN DATA.
+John01011960
+Mary11071955
+Kate25111962
+Mark08061959
+END DATA.
+
+COMPUTE birthday = DATE.MDY(mm,dd,yy).
+FORMATS birthday (DATE).
+
+
+F.2) SPECIFICATION DATES
+
+***calculation and selection.
+***this works***.
+SELECT IF datevar >= date.mdy(3,1,2006).
+ 
+
+F.2) SELECT SOME CHARACTERS (‘DELETE’)
+*To delete the character “H” and make it numeric.
+From David Marso (SPSS group)
+
+H092114600000
+H100286260000
+H100286260000 
+
+COMPUTE newvar=NUMBER(CHAR.SUBSTR(oldvar,2),N12).
+FORMATS newvar (N12).
+
+
+
+
+F.3) adding months.
+*If the cohort =7  then from sample_MOdate, 7 month after is the call month.
+do if cohort=7.
+   compute call_MOdate=dateSUM(sample_MOdate, 7, "month") .
+end if.
+
+do if cohort=13.
+   compute call_MOdate=dateSUM(sample_MOdate, 13, "month") .
+end if.
+
+*This is to visualize in the data instead of numbers.
+FORMATS call_MOdate(MOYR10).
+VARIABLE WIDTH call_MOdate (10).
+
+*This is to visualize in the data instead of numbers.
+FORMATS call_MOdate(MOYR10).
+VARIABLE WIDTH call_MOdate (10).
+execute.
+freq call_MOdate.
+
+*calculating days between two dates
+compute lag_days=datediff(Initial_date, BARR_date, "days").
+
+
+F.4) Identifying with key words in the string variable.
+COMPUTE #flag1=INDEX(UPCASE(VAR1),"ABCD")>0.
+COMPUTE #flag2=INDEX(UPCASE(VAR1),"DEE EEE FFF GGG")>0.
+COMPUTE flag = #flag1 OR #flag2.
+
+
+F.5) Parsing a string delimited with symbols
+*This come as an adaption from http://www.talkstats.com/showthread.php/24934-splitting-multiple-values-in-one-variable-to-several-variables.
+*See http://www.ats.ucla.edu/stat/spss/modules/functions.htm SECTION 4 to better understand the macro structure/function.
+********NOTE: Before running the macro, make sure that the string length is increased so, the 'added' "|"  can be loaded into the data.
+*Note: The symbol "|" need to be added to the strings, so the MACRO can loop up to the end.
+*Without this, the string will be truncated before the last data entry.
+*create the new string.
+string ar_g_places (A200).
+execute.
+
+*Concatenate the last symbol.
+do if a_g_places <>"".
+   compute ar_g_places = concat(rtrim(a_g_places), " | "). /*need the right trim and the SPACE BEFORE & AFTER THE SYMBOL to be able to add the symbol.
+end if.
+execute.
+
+list a_g_places ar_g_places.
+
+*>>>>>>>>>>>>>>>Define MACRO to parse the stacked variable. Once this is define, just call the macro.
+
+DEFINE !parse (var=!TOKENS(1) /nstack=!TOKENS(1))
+         COMPUTE !var=CONCAT(RTRIM(!var),'|'). /******* This line add an extra symbol at the end so and 'empty' entry is found
+         STRING #str(A30).
+         VECTOR !var (!nstack A30).
+         COMPUTE #count=1.
+         LOOP #cnt=1 TO !nstack.
+         +COMPUTE #str=SUBSTR(!var,#count).
+         +COMPUTE #end=INDEX(#str,'|')-1.
+         +DO IF #end=-1.
+         + BREAK.
+         +END IF.
+         +COMPUTE !var(#cnt)=LTRIM(SUBSTR(#str,1,#end)). /*******Added Ltrim for spaces after |.
+         +COMPUTE #count=#count+#end+1.
+         END LOOP IF #end=-1.
+         EXECUTE.
+!ENDDEFINE.
+
+* Call the macro to unstack the two variables.
+!parse var=ar_g_places        nstack=9. /**********The longest case has 9 stacks. USE THE RECODED variable.
+
+freq ar_g_places1 to ar_g_places9.
+*Checking the unstacked variables.
+list a_g_places ar_g_places ar_g_places1 to ar_g_places9/CASES = FROM 1 to 1000 by 17.
+
+
+*This loop create check all that apply questions.
+compute ar_g_places_1=0.
+compute ar_g_places_2=0.
+compute ar_g_places_3=0.
+compute ar_g_places_4=0.
+compute ar_g_places_5=0.
+compute ar_g_places_6=0.
+compute ar_g_places_7=0.
+compute ar_g_places_8=0.
+compute ar_g_places_9=0.
+
+
+vector g_places =  ar_g_places1 to ar_g_places9.
+loop #i=1 to 9.
+if g_places(#i) = "Casino"                ar_g_places_1=1.
+if g_places(#i) = "Convenience Store"     ar_g_places_2=1.
+if g_places(#i) = "Home or Friend's Home" ar_g_places_3=1.
+if g_places(#i) = "Internet"              ar_g_places_4=1.
+if g_places(#i) = "Racetrack"             ar_g_places_5=1.
+if g_places(#i) = "School"                ar_g_places_6=1.
+if g_places(#i) = "Sporting event"        ar_g_places_7=1.
+if g_places(#i) = "Work"                  ar_g_places_8=1.
+if g_places(#i) = "Other"                 ar_g_places_9=1.
+end loop.
+
+variable labels
+ar_g_places_1 "Place of gambling: Casino"
+ar_g_places_2 "Place of gambling: Convenience Store"
+ar_g_places_3 "Place of gambling: Home or Friend's Home"
+ar_g_places_4 "Place of gambling: Internet"
+ar_g_places_5 "Place of gambling: Racetrack"
+ar_g_places_6 "Place of gambling: School"
+ar_g_places_7 "Place of gambling: Sporting event"
+ar_g_places_8 "Place of gambling: Work"
+ar_g_places_9 "Place of gambling: Other"/.
+
+value labels
+ar_g_places_1 to ar_g_places_9 0 "Unchecked"
+                               1 "Checked"/.
+
+frequencies ar_g_places_1 to ar_g_places_9.
+
+
+*Received any type of counseling.
+frequencies a_counseling.
+recode a_counseling ("Yes"=1) ("No"=0) into ar_counseling.
+variable labels
+ar_counseling "Recoded: Gambling accepted indicator".
+value labels
+ar_counseling 0 "No" 1 "Yes"/.
+frequencies a_counseling ar_counseling.
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER G. random sampling
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+*This create a random number <100 in draw. Then it ranks, and it selects. It could be useful to random sample within a cluster (e.g. sex in the code).
+
+COMPUTE id=$casenum.
+COMPUTE draw=UNIFORM(100).
+freq id draw.
+RANK draw BY sex.
+sort cases by rdraw sex.
+* the following line will select 5 random males and 5 females, change
+5 to the number you need.
+SELECT IF (rdraw<=5).
+LIST.
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER G. LOOP & DO IF
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+G.1) CREATE VECTOR AND LOOP
+
+*to compute something.
+vector Sr_1.= Sr_1.1 to Sr_1.59.
+vector S_4.= S_4.1 to S_4.59.
+loop #i=1 to 59.
+if Sr_1.(#i) EQ 3 and S_4.(#i) GE 1 placement_FTF_count=placement_FTF_count+S_4.(#i).
+end loop.
+freq placement_FTF_count.
+
+G.1.1) *To identify cases with 888.
+
+compute mis888=0.
+compute mis888_2=0.
+vector V=ADEID to Q109_5.
+loop #=1 to 149.
+if V(#)=888 mis888=1.
+end loop.
+
+G.1.2) *To replace the 99 as system missing.
+
+vector SM=ADEID to Q109_5.
+loop #=3 to 149.
+if SM(#)=99 SM(#)=$sysmis.
+end loop.
+
+
+
+G.2) This if LAG for data checking.
+*Double check if the 'pairings' are correct.
+*Check the Modate for GTRS and IGTO and they should be pretty close. I would say no more than 6 months.
+compute lenght_GTRS_IGTO=99.
+DO IF (clientn = LAG(clientn) and (packet>0 and LAG(set)>0)).
+      compute length_GTRS_IGTO=datediff(MOdate, LAG(MOdate), "months").
+end if.
+execute.
+freq length_GTRS_IGTO.
+
+*create a variable that indicate aceptable difference between GTRS and IGTO.
+*There are 6 cases with 1 month delay. 708 cases match.
+compute lag_OK=0.
+if (length_GTRS_IGTO <= 1 and length_GTRS_IGTO >=-1) lag_OK=1.
+freq lag_OK.
+
+
+*MatchID assginment.
+*To match id the LAG_Ok variable should be =1.
+
+Do IF (clientn = LAG(clientn) and  (packet>0 and LAG(set)>0) and lag_OK=1).
+   compute Amatch_id=LAG(set).
+end if.
+execute.
+
+freq Amatch_id.
+
+G.3) SCORING WITH DO IF
+
+* On 17-Feb-2004, Vassilis wrote in newsgroup comp.soft-sys.stat.spss:
+*>>>>>>>>>>>multiple choice question scoring.
+*> Hi all
+*> I have a fairly large table (37000 candidates by 75 questions ranging from a
+*> to f). How can I make a new table showing the correct/wrong answers in the
+*> form 1,0?
+*> Thanx
+*> Vassilis
+
+* Mike Lacy posted a very elegant solution, which is demonstrated below,
+* but using a smaller data set with only 5 questions, and 5 cases.
+
+data list list / q1 to q5 (5a1).
+begin data.
+a b c d e
+e c b e a
+a c c b e
+b b c d e
+a e c c a
+end data.
+
+string key (a5).
+compute key = 'abcda' .            /* KEY has the right answers for the 5 questions .
+numeric right1 to right5 (f1.0).
+do repeat 
+    quest = q1 to q5 /
+    right = right1 to right5 /
+    i = 1 to 5 .
+-    compute right = (quest = substr(key,i,1)).
+end repeat .
+compute numright = sum(right1 to right5).
+format numright(f2.0).
+exe.
+
+list.
+
+
+G.3.1) SCORING - another example
+*>>>>>>>>>>>multiple choice question scoring.
+The usual procedure is to make a file with the  answers that the
+students gave, and let the computer do the scoring. That eliminates
+human errors of scoring, and gives you an unambiguous record
+of what was what.  You can also re-score immediately if you learn
+that your key was wrong.
+
+Here is one way to do the scoring.
+
+DO REPEAT  ans= var1 to var12/
+                key= 1,4,4,2,  3,2,1,4,  2,2,3,3 /
+                correct= good1 to good12 .
+COMPUTE  correct= (ans EQ key).
+END REPEAT.
+
+The COMPUTE statement creates a Bolean result, so that
+the correct/wrong  get coded as 1/0 respectively.
+MISSING for an answer will result in MISSING  in the
+new variables, good1 to good12. 
+
+G.4) WHEN THE TEXT DATA IS MESSY
+*>>>>>>>>>>>>>>When the txt file come as continuous txt with the lenght as ‘delimiter.’
+
+NEW FILE.
+INPUT PROGRAM.
+DATA LIST /#x01 TO #x10 (10F1.0).
+REPEATING DATA STARTS=1/OCCURS=3 /DATA x01 TO x10 (10F1).
+END INPUT PROGRAM.
+BEGIN DATA
+112345678921234567893123456789
+END DATA.
+LIST.
+
+x01 x02 x03 x04 x05 x06 x07 x08 x09 x10
+ 
+ 1   1   2   3   4   5   6   7   8   9
+ 2   1   2   3   4   5   6   7   8   9
+ 3   1   2   3   4   5   6   7   8   9 
+
+*>>>>>>>>>>>>>>
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER H. DATA COMPARISON
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+H.1) CASES TO VARIABLES WITH INDEX. This will allow to create a list that can be used to clean the data (exporting to excel) and importing back to spss.
+*This lines were used to COMPARE Medicaid data. Paper and teleform.
+
+*To identify all 888 to re-Examine the values.
+VARSTOCASES 
+  /MAKE Y FROM Q1 TO Q200 
+  /INDEX=varname(Y) 
+  /KEEP ID q1 TO q200. 
+* List cases where Y=888. 
+TEMPORARY. 
+SELECT IF (Y EQ 888). 
+LIST ID varname Y. 
+
+H.1.1) *Another way to do it. This one create the ‘clean’ final spss file. It may be better if we want to use to match with the original final.
+
+DATASET COPY datacopy.
+DATASET ACTIVATE datacopy.
+RECODE q1 TO Q109_5 (0=SYSMIS) (ELSE=copy).
+MATCH FILES / FILE * / KEEP surveyid q1 TO Q109_5.
+VARSTOCASES MAKE Q from q1 TO q109_5 /INDEX=varname(Q).
+*LIST VARIABLES surveyID varname Q.
+
+
+
+H.2)
+
+*cases to variables does not 'list'  the sysmis cases. Make a new values.
+
+vector V=q1 to Q109_5.
+loop #=1 to 147.
+if missing(V(#)) V(#)=999.
+end loop.
+freq q3.
+
+*>>>>>>>>>>>>>>>>*To verify the identity of two files.
+ADD FILES /FILE="H:\GROUPS\CSBR\Medicaid Evaluation\data_1.sav"/
+ /FILE="H:\GROUPS\CSBR\Medicaid Evaluation\data_2.sav".
+EXECUTE.
+
+VARSTOCASES
+  /MAKE Y FROM VAR00001 to VAR00007
+  /INDEX=varname(Y)
+  /KEEP id file_n VAR00001 to VAR00007.
+
+*This is crucial to determine the right order to compare the files 1 & 2.
+*File_n is the source 1 & files.
+sort cases by varname id file_n.
+
+*This to find the different values within the same id (case).
+compute different=0.
+if id=lag(id) and Y NE lag(Y) different=1.
+temporary.
+select if different=1.
+list id varname Y.
+*>>>>>>>>>>>>>>>>*To verify the identity of two files-end.
+
+ 
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER H. PROCEDURES
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+Common procedures. II-1) ANALYSIS a.
+
+
+frequencies attitude_score
+  /HISTOGRAM NORMAL
+  /ORDER=ANALYSIS.
+
+
+T-TEST
+  GROUPS = q17(1 2)
+  /MISSING = ANALYSIS
+  /VARIABLES = q12a q12b q12c q12d
+  /CRITERIA = CI(.95) .
+
+II-2) ANALYSIS b.
+CROSSTABS
+   /TABLES= age_cat age_cat2 q62 q62_r q66 FPL q67 q68a source_d URr BY D_any
+   /FORMAT=AVALUE TABLES
+   /STATISTICS=CHISQ
+   /CELLS=COUNT ROW
+   /COUNT ROUND CELL.
+
+
+II-3) MULTIVARIABLE ANALYSIS
+
+-Linear regression
+
+REGRESSION
+  /MISSING LISTWISE
+  /STATISTICS COEFF OUTS R ANOVA
+  /CRITERIA=PIN(.05) POUT(.10)
+  /NOORIGIN
+  /DEPENDENT d_percent
+  /METHOD=STEPWISE norc_ever
+  /METHOD=ENTER attitude_score
+  /METHOD=ENTER stigma_score
+  /METHOD=ENTER dif_disclose_score
+  /METHOD=ENTER q59 male single married  divorced
+  /METHOD=ENTER inc_0_15K inc_15K_25K inc_25K_50K inc_50K_75K
+  /METHOD=ENTER smoke alcohol
+  /METHOD=ENTER employed stu_hom retired
+  /METHOD=ENTER LN_sum
+  /METHOD=ENTER metro urban.
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+CHAPTER H.  CUSTOM TABLES
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+*CTABLES-Xtab
+
+***********************************************************Use this OMS to generate a word documents with the tables-CROSSTAB WITH FPL.
+OMS
+  /SELECT TABLES
+  /IF COMMANDS=['CTables'] SUBTYPES=['Custom Table']  
+  /DESTINATION FORMAT=DOC OUTFILE='N:\Share\Ki\2011-IHHS\Analysis\Data\Tables\OMS_IHHS_Tables_03_26_Early_Childhood_FPL.doc'
+  /TAG='EC-004'.
+
+* Custom Tables  with the Valid (Weighted %).
+DEFINE IHHS_Xtab_FPL (myvar = !TOKENS(1) / qntitle = !TOKENS(1) )
+CTABLES
+  /VLABELS  VARIABLES=!myvar EC_FPL DISPLAY=none
+  /TABLE !myvar [COLPCT.VALIDN '' COMMA40.1] BY EC_FPL
+  /CATEGORIES VARIABLES=!myvar ORDER=A EMPTY=INCLUDE MISSING=EXCLUDE
+  /CATEGORIES VARIABLES=EC_FPL [1 , 2, 3, OTHERNM] EMPTY=include TOTAL=YES  LABEL='Total %' POSITION=AFTER
+  /TITLES TITLE = !qntitle .
+!ENDDEFINE.
+
+IHHS_Xtab_FPL  myvar = VHS1  qntitle=" In general, how would you rate CHILD overall health now? (Sample n = )".
+IHHS_Xtab_FPL myvar = cshcn qntitle="Children with Special Health Care Need (n = )".
+
+OMSend.
+
+
+
+
+***********************************************************Use this OMS to generate a word documents with the tables-FREQUENCIES.
+OMS
+  /SELECT TABLES
+  /IF COMMANDS=['CTables'] SUBTYPES=['Custom Table']  
+  /DESTINATION FORMAT=DOC OUTFILE='N:\Share\Ki\2011-IHHS\Analysis\Data\Tables\OMS_IHHS_Tables_03_26_Early_Childhood.doc'
+  /TAG='EC-002'.
+******second batch variables.
+* Custom Tables  with the Valid (Weighted %) , Weighted n, .
+DEFINE m_IHHS_1 (myvar = !TOKENS(1) / qntitle = !TOKENS(1) )
+CTABLES
+  /VLABELS VARIABLES=!myvar DISPLAY=none
+  /TABLE !myvar [COLPCT.VALIDN ' Valid  %' PCT40.1, COUNT 'Weighted Pop Est n' COMMA40.0]
+  /CATEGORIES VARIABLES=!myvar ORDER=A KEY=VALUE EMPTY=INCLUDE TOTAL=YES POSITION=AFTER
+    MISSING=EXCLUDE
+  /TITLES TITLE = !qntitle .
+!ENDDEFINE.
+
+m_IHHS_1 myvar = VHS1  qntitle=" In general, how would you rate CHILD overall health now? (Sample n = 2,386)".
+m_IHHS_1 myvar = cshcn qntitle="Children with Special Health Care Need (n = 2,386)".
+
+OMSend.
+
+
+
+**************Phyton to delete empty variables in a large spss file.
+
+Get file ="N:\Share\Ki\eHealth\Extracted_Data\07-26-10\HHC_complete_only_07_26_10.sav".
+
+*******WHO are They.
+*temporary.
+*select if complete=1.
+*list aemail telkey.
+
+
+********The FLIP does not work because it has many string.
+*flip.
+
+************THIS IS FROM SPSS WORK GROUP************.
+*In order to RUN this, the delEmptyVars.py (phyton program) should be saved in the extension subdirectory of python26/lib/site-packages
+*see also comp.soft-sys.stat.spss "How to deop variables with all system missing values?" in the google groups, dated July 26, 2010.
+
+begin program.
+import spss, delEmptyVars
+delEmptyVars.delEmptyVars()
+end program.
+
+save outfile ="N:\Share\Ki\eHealth\Extracted_Data\07-26-10\HHC_complete_only_07_26_10_FILE2.sav" .
+
+
+
+
+*Check all that apply outputs.
+
+get file ="N:\Share\Ki\CAHPS-2011\Data\Data_used_analysis\CAHPS_adult_merged_6.sav".
+
+temporary.
+select if q12=1.
+CTABLES
+  /VLABELS VARIABLES=q13_1 to q13_9 DISPLAY=label
+  /TABLE q13_1 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN 'Percent' PCT40.0]
++ q13_2 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
++ q13_3 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
++ q13_4 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
++ q13_5 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
++ q13_6 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
++ q13_7 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
++ q13_8 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN 'Percent' PCT40.0]
++ q13_9 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
+  /CLABELS ROWLABELS=OPPOSITE
+  /SLABELS POSITION=COLUMN VISIBLE=yes
+  /CATEGORIES VARIABLES=q13_1 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_2 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_3 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_4 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_5 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_6 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_7 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_8 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q13_9 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /TITLES TITLE = "q13. In the last 6 months, did any of the following stop you from getting care, tests or treatment that you or a health professional thought you needed?".
+
+
+
+*ANOTHER EXAMPLE OF CHECK ALL THAT APPLY.
+temporary.
+select if q47=1.
+CTABLES
+  /VLABELS VARIABLES=q48_1 to q48_3 DISPLAY=label
+  /TABLE q48_1 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN 'Percent' PCT40.0]
++ q48_2 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
++ q48_3 [C][COUNT 'Frequency' F40.0, rowPCT.TOTALN  'Percent' PCT40.0]
+  /CLABELS ROWLABELS=OPPOSITE
+  /SLABELS POSITION=COLUMN VISIBLE=yes
+  /CATEGORIES VARIABLES=q48_1 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q48_2 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /CATEGORIES VARIABLES=q48_3 ORDER=d KEY=VALUE EMPTY=INCLUDE
+  /TITLES TITLE = "q48. What kinds of dental care did you need in the last 6 months? ".
+
+
+
+
+* Custom Tables.     TO HAVE TOTAL % AT THE END OF COLUMN
+CTABLES
+  /VLABELS VARIABLES=q2 DISPLAY=NONE  /VLABELS VARIABLES=Prog_type DISPLAY=LABEL
+  /TABLE q2 [C][COLPCT.VALIDN '' PCT40.1, TOTALS[UCOUNT '' F40.0]] BY Prog_type [C]
+  /SLABELS POSITION=ROW
+  /CATEGORIES VARIABLES=q2 ORDER=A KEY=VALUE EMPTY=INCLUDE TOTAL=YES POSITION=AFTER MISSING=EXCLUDE
+  /CATEGORIES VARIABLES=Prog_type [1, 3, SUBTOTAL='Total' , 2, OTHERNM] EMPTY=INCLUDE POSITION=AFTER.
+
+
+*sUBTOTAL….
+DEFINE m_CAHPS_Child (myvar = !TOKENS(1) / qntitle = !TOKENS(1) )
+*Custom Tables.
+CTABLES
+  /VLABELS VARIABLES=!myvar DISPLAY=NONE
+  /VLABELS VARIABLES=Prog_type DISPLAY=NONE
+  /TABLE !myvar [C][COLPCT.VALIDN '' PCT40.1, TOTALS[UCOUNT '' F40.0]] BY Prog_type [C]
+  /SLABELS POSITION=ROW
+  /CATEGORIES VARIABLES=!myvar ORDER=A KEY=VALUE EMPTY=INCLUDE TOTAL=YES LABEL='Total N' POSITION=AFTER MISSING=EXCLUDE
+  /CATEGORIES VARIABLES=Prog_type [1, 3, SUBTOTAL='Total' , 2, OTHERNM] EMPTY=INCLUDE POSITION=AFTER
+  /TITLES TITLE = !qntitle .
+!ENDDEFINE.
+
+m_CAHPS_Child myvar = q2  qntitle = "2. How many months or years in a row have yourchild been in [ PROG_NAME ]?".
+m_CAHPS_Child myvar = q3  qntitle = "3. Do you use [ PROG_NAME ] for most or all of your child's health care?".
+
+
+
+*Stacked Xtabs by few variables
+*Drop the "total" which is the same than valid percent.
+**********************Q1_2.
+* Custom Tables.
+CTABLES
+  /VLABELS VARIABLES=Q1_2 Total_Ctable gender edu_3cat parent_type  place_cat race_cat  DISPLAY=BOTH
+  /TABLE Q1_2 BY Total_Ctable [UCOUNT F40.0, COUNT F40.0, COLPCT.VALIDN ' Valid  %' PCT40.1]
+                            + gender [COLPCT.VALIDN ' Valid  %' PCT40.1]
+                            + edu_3cat [COLPCT.VALIDN ' Valid  %' PCT40.1]
+                            + parent_type [COLPCT.VALIDN ' Valid  %' PCT40.1]
+                            + place_cat [COLPCT.VALIDN ' Valid  %' PCT40.1]
+                            + race_cat [COLPCT.VALIDN ' Valid  %' PCT40.1]
+  /CATEGORIES VARIABLES=Q1_2 ORDER=A KEY=VALUE EMPTY=INCLUDE TOTAL=YES POSITION=AFTER MISSING=EXCLUDE
+  /CATEGORIES VARIABLES=Total_Ctable  gender edu_3cat parent_type  place_cat race_cat ORDER=A KEY=VALUE EMPTY=INCLUDE  TOTAL=NO POSITION=BEFORE MISSING=EXCLUDE.
+
+
+
